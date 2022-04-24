@@ -5,8 +5,6 @@
 Implementation of **PVR for Control**, as presented
 in [The (Un)Surprising Effectiveness of Pre-Trained Vision Models for Control](https://arxiv.org/abs/2203.03580).
 
-Part of the code was built on the [RIDE repository](https://github.com/facebookresearch/impact-driven-exploration).
-
 ## Codebase Installation
 ```
 conda create -n pvr python=3.8
@@ -48,3 +46,5 @@ through the embedding, in order to save time.
 
 For more details on how to generate trajectories and pickles, see the README in
 the `behavioral_cloning` folder.
+
+Pre-trained models can be downloaded [here](xxx).

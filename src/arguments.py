@@ -40,50 +40,20 @@ parser.add_argument('--run_id', default=1, type=int,
                     (instead of a different random seed since torchbeast does not accept this).')
 parser.add_argument('--seed', default=1, type=int,
                     help='Random seed.')
-parser.add_argument('--save_interval', default=10, type=int,
-                    help='Time interval (in minutes) at which to save the model.')
-parser.add_argument('--checkpoint_num_frames', default=10000000, type=int,
-                    help='Number of frames for checkpoint to load.')
-parser.add_argument('--checkpoint', default=None,
-                    help='Path to model.tar for loading checkpoint from past run.')
 
 # Training settings.
-parser.add_argument('--disable_checkpoint', action='store_true',
-                    help='Disable saving checkpoint.')
-parser.add_argument('--savedir', default='logs',
-                    help='Root dir where experiment data will be saved.')
-parser.add_argument('--num_actors', default=40, type=int,
-                    help='Number of actors.')
 parser.add_argument('--total_frames', default=50000000, type=int,
                     help='Total environment frames to train for.')
 parser.add_argument('--batch_size', default=32, type=int,
                     help='Learner batch size.')
 parser.add_argument('--unroll_length', default=100, type=int,
                     help='The unroll length (time dimension).')
-parser.add_argument('--queue_timeout', default=1, type=int,
-                    help='Error timeout for queue.')
-parser.add_argument('--num_buffers', default=40, type=int,
-                    help='Number of shared-memory buffers.')
-parser.add_argument('--num_threads', default=4, type=int,
-                    help='Number learner threads.')
 parser.add_argument('--mp_start', default='spawn', type=str,
                     help='Start method of multiprocesses. \
                     Depending on your machine, there can be problems between CUDA \
                     with some environments. To avoid them, use `spawn`.')
 parser.add_argument('--disable_cuda', action='store_true',
                     help='Disable CUDA.')
-parser.add_argument('--clip_reward', action='store_true',
-                    help='If True, rewards are clipped in [-1,1].')
-parser.add_argument('--max_reward', default=1.0, type=float,
-                    help='To normalize rewards (use 1 to keep default rewards).')
-
-# Loss settings.
-parser.add_argument('--entropy_cost', default=0.0005, type=float,
-                    help='Entropy cost/multiplier.')
-parser.add_argument('--baseline_cost', default=0.05, type=float,
-                    help='Baseline cost/multiplier.')
-parser.add_argument('--discounting', default=0.99, type=float,
-                    help='Discounting factor.')
 
 # Optimizer settings.
 parser.add_argument('--learning_rate', default=0.0001, type=float,
@@ -96,7 +66,3 @@ parser.add_argument('--epsilon', default=1e-5, type=float,
                     help='RMSProp epsilon.')
 parser.add_argument('--max_grad_norm', default=40., type=float,
                     help='Max norm of gradients.')
-
-# Training Models.
-parser.add_argument('--algorithm_name', default='vanilla',
-                    help='Algorithm used for training the agent.')
