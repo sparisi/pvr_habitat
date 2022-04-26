@@ -7,10 +7,10 @@ in [The (Un)Surprising Effectiveness of Pre-Trained Vision Models for Control](h
 
 ## Codebase Installation
 ```
-conda create -n pvr python=3.8
-conda activate pvr
-git clone git@github.com:sparisi/habitat_pvr.git
-cd pvr
+conda create -n pvr_habitat python=3.8
+conda activate pvr_habitat
+git clone git@github.com:sparisi/pvr_habitat.git
+cd pvr_habitat
 pip install -r requirements.txt
 ```
 
