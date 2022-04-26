@@ -47,4 +47,4 @@ through the embedding, in order to save time.
 For more details on how to generate trajectories and pickles, see the README in
 the `behavioral_cloning` folder.
 
-Pre-trained models can be downloaded [here](xxx).
+Pre-trained models can be downloaded [here](https://github.com/sparisi/pvr_habitat/releases/tag/models).
