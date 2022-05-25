@@ -1,44 +1,59 @@
 import argparse
-import datetime
 import itertools
-import pprint
 import os
 import submitit
-import pickle
-from collections import defaultdict
+import pickle5 as pickle
 
-from behavioral_cloning.save_embedded_obs import run as runner_main
-from behavioral_cloning.save_embedded_obs import parser as runner_parser
-
-os.environ['OMP_NUM_THREADS'] = '1'
+from data_generator.save_embedded_obs import run as runner_main
+from data_generator.save_embedded_obs import parser as runner_parser
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--local', action='store_true')
 parser.add_argument('--debug', action='store_true')
-parser.add_argument('--partition', type=str, default='learnfair',
-                    choices=['learnfair', 'devlab', 'prioritylab'])
+parser.add_argument('--partition', type=str, default='learnfair')
+parser.add_argument('--log_path', type=str, default='./out/')
+
+################################################################################
+
+
+### The experiment unique id (xpid) is generated using the arguments defined
+### in args_grid by taking the initials of the arguments and their value.
 
 # key => k; some_key => sk
 def make_prefix(key):
-    tokens = key.split('_')
-    return ''.join(w[0] for w in tokens)
+    return ''.join(w[0] for w in key.split('_'))
 
+# {key: v1, some_key: v2} => kv1--skv2
+def dict_to_xpid(d):
+    return '_'.join(
+        [f'{make_prefix(k)}{v}' for k, v in d.items()])
 
+# Generates all combinations of parameters defined in args_grid and merges
+# them with default parameters retrieved from the parser
 def expand_args(params):
-    sweep_args = {k: v for k, v in params.items() if isinstance(v, list)}
     # sweep :: [{arg1: val1, arg2: val1}, {arg1: val2, arg2: val2}, ...]
+    sweep_args = {k: v for k, v in params.items() if isinstance(v, list)}
     sweep = [
         dict(zip(sweep_args.keys(), vs))
         for vs in itertools.product(*sweep_args.values())
     ]
     expanded = []
     for swargs in sweep:
-        new_args = {**params, **swargs}  # shallow merge
-        new_args['xpid'] = '--'.join(
-            [f'{make_prefix(k)}={v}' for k, v in swargs.items()])
+        new_args = {**params, **swargs} # shallow merge
+        new_args['xpid'] = dict_to_xpid(swargs)
         expanded.append(new_args)
 
     return expanded
+
+# Makes cmd-like params
+def make_command(params):
+    return [
+            ('--%s%s' % (k, '=' + str(v) if not (type(v) == bool and v) else '')) # args like --train=True become just --train
+            for k, v in params.items()
+            if not (type(v) == bool and not v) # args like --train=False are skipped,
+           ]
+
+
+################################################################################
 
 
 args_grid = dict(
@@ -48,11 +63,10 @@ args_grid = dict(
         'HabitatImageNav-office_0',
         'HabitatImageNav-room_0',
         'HabitatImageNav-hotel_0',
+        'HMS-pen-v0',
+        'HMS-relocate-v0',
     ],
     embedding_name=[
-        'mae_base',
-        'mae_large',
-        #
         'moco_croponly_places_uber_345',
         'moco_croponly_uber_345',
         'moco_croponly_places_uber_35',
@@ -70,10 +84,7 @@ args_grid = dict(
         'moco_aug_places_uber_45',
         'moco_aug_uber_45',
         #
-        'moco_croponly_mujoco',
         'moco_croponly_habitat',
-        'moco_croponly_uber',
-        'moco_aug_mujoco',
         'moco_aug_habitat',
         #
         'moco_croponly_places_l4',
@@ -96,6 +107,7 @@ args_grid = dict(
         # 'maskrcnn_l3',
         'clip_rn50',
         'clip_vit',
+        'mae_base',
         #
         'resnet34',
         'resnet50',
@@ -104,73 +116,51 @@ args_grid = dict(
         'resnet50_l3',
         'resnet50_places_l4',
         'resnet50_places_l3',
+        #
+        'random',
     ],
-    source=['pickle'],
 )
-
-
-# NOTE params is a shallow merge, so do not reuse values
-def make_command(params, unique_id):
-    # creating cmd-like params
-    params = itertools.chain(*[('--%s' % k, str(v))
-                               for k, v in params.items()])
-    return list(params)
-
 
 args = parser.parse_args()
 args_grid = expand_args(args_grid)
 print(f"Submitting {len(args_grid)} jobs to Slurm...")
 
-uid = datetime.datetime.now().strftime('%H-%M-%S-%f')
 job_index = 0
 
 for run_args in args_grid:
-    flags = runner_parser.parse_args(make_command(run_args, uid))
+    flags = runner_parser.parse_args(make_command(run_args))
+    job_name = 'eo_' + flags.xpid
 
     # Check if run was already done, and if so skip it
     save_name = os.path.join(flags.data_path,
                              flags.env + '_' +
                              flags.embedding_name + '.pickle')
     if os.path.isfile(save_name):
-        print('skipping', run_args)
-        print()
+        print(' _ Skipping (already done) : {}\n'.format(job_name))
         continue
 
     job_index += 1
 
-    print('########## Job {:>4}/{} ##########\nFlags: {}'.format(
-        job_index, len(args_grid), flags))
+    print('# Job {}/{} : {}'.format(job_index, len(args_grid), job_name))
 
-    if args.local:
-        executor_cls = submitit.LocalExecutor
-    else:
-        executor_cls = submitit.SlurmExecutor
-
-    executor = executor_cls(folder='./out/')
-
-    partition = args.partition
-    if args.debug:
-        partition = 'devlab'
-
+    executor = submitit.AutoExecutor(folder=args.log_path, slurm_max_num_timeout=100)
     executor.update_parameters(
-        partition=partition,
-        comment='icml_27_01',
-        time=1319,
+        name=job_name,
+        slurm_partition='devlab' if args.debug else args.partition,
+        slurm_comment='this_is_a_comment',
+        timeout_min=1440,
         nodes=1,
-        ntasks_per_node=1,
-        # job setup
-        job_name='%s-%s-%s' % ('emb_obs', run_args['embedding_name'], run_args['env']),
-        mem="32GB",
-        cpus_per_task=10,
-        num_gpus=1,
-        constraint='pascal',
+        tasks_per_node=1,
+        gpus_per_node=1,
+        cpus_per_task=8,
+        mem_gb=64,
     )
 
     print('Sending to slurm... ', end='')
     job = executor.submit(runner_main, flags)
-    print('Submitted with job id: ', job.job_id)
+    print('Submitted with job id: ', job.job_id, '\n')
 
     if args.debug:
-        print('Only running one job on devfair for debugging...')
+        print(' STOPPING. Running only one job on devfair for debugging...')
         import sys
         sys.exit(0)

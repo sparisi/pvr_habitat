@@ -1,4 +1,3 @@
-# python -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
 from detectron2.layers import ShapeSpec
 from detectron2.config import LazyCall as L
 from detectron2.modeling.meta_arch import GeneralizedRCNN
@@ -9,15 +8,16 @@ from detectron2.modeling.box_regression import Box2BoxTransform
 from detectron2.modeling.matcher import Matcher
 from detectron2.modeling.poolers import ROIPooler
 from detectron2.modeling.proposal_generator import RPN, StandardRPNHead
+from detectron2.config import instantiate
 from detectron2.modeling.roi_heads import (
     FastRCNNOutputLayers,
     MaskRCNNConvUpsampleHead,
     Res5ROIHeads,
 )
+
 import torch
 import torch.nn as nn
 import sys
-from detectron2.config import instantiate
 
 
 def make_compress_stages(in_dim, comp_dim):

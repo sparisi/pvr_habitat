@@ -1,12 +1,11 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
-# All rights reserved.
-
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
+"""
+This script saves optimal trajectories using Habitat's native solver.
+Data is saved as `.pickle`: it takes a lot of space, but it is fast to load.
+"""
 
 import os
 import numpy as np
-import pickle
+import pickle5 as pickle
 from tqdm import tqdm
 
 from src.gym_wrappers import make_gym_env
@@ -14,12 +13,8 @@ from src.gym_wrappers import make_gym_env
 from habitat.datasets.utils import get_action_shortest_path
 from habitat_sim.errors import GreedyFollowerError
 
-import argparse
-
-parser = argparse.ArgumentParser()
+from src.arguments import parser
 parser.add_argument('--n_trajectories', type=int, default=10000)
-parser.add_argument('--env', type=str, default='HabitatPointNav-apartment_0')
-parser.add_argument('--save_path', type=str, default='behavioral_cloning')
 
 
 def get_shortest_path(env):
@@ -28,7 +23,7 @@ def get_shortest_path(env):
     shortest path to the goal.
     `obs` shape is (H, W, 3) for PointNav (1 RGB frame) or (H, W, 6) for ImageNav (2 frames)
     where (H, W) are defined in habitat_config/nav_task.yaml, while
-    `true_state = [agent_position, agent_orientation, goal_position, scene_id, scene_numer]`
+    `true_state = [agent_position, agent_orientation, goal_position, scene_id, scene_number]`
     (total size is 12).
 
     If the goal cannot be reached within the episode steps limit, the best
@@ -88,7 +83,6 @@ def gen_data_habitat(flags):
     done = []
     true_state = []
     for trajectory in tqdm(range(flags.n_trajectories), desc='trajectory'):
-        env.randomize()
         env.reset()
         o, a, r, d, s = get_shortest_path(env)
         obs.append(np.asarray(o))
@@ -99,10 +93,10 @@ def gen_data_habitat(flags):
 
     data = dict(obs=obs, action=action, reward=reward, done=done, true_state=true_state)
 
-    if not os.path.exists(flags.save_path):
-        os.makedirs(flags.save_path, exist_ok=True)
+    if not os.path.exists(flags.data_path):
+        os.makedirs(flags.data_path, exist_ok=True)
 
-    with open(os.path.join(flags.save_path, flags.env + '.pickle'), 'wb') as handle:
+    with open(os.path.join(flags.data_path, flags.env + '.pickle'), 'wb') as handle:
         pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     env.close()
