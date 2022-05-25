@@ -76,7 +76,7 @@ pip install -e.
 > 2) Bugfix where the agent is placed slightly above the ground, and therefore the
 terminal goal condition is never triggered.
 
-* Download and extract Replica scenes in the root folder of `ml4c`.
+* Download and extract Replica scenes in the root folder of `pvr`.
 > WARNING! The dataset is very large!
 
 ```
