@@ -104,7 +104,8 @@ as environment variable when you run the code, or change the default path in
 ### 2. Get the Data
 You must generate / download optimal trajectories for behavioral cloning.
 * HabitatImageNav: use its native solver by running `data_generator/save_habitat_trajectories.py`.
-* Hand Manipulation Suite: [download](https://github.com/Divye02/hand_vil/tree/master/expert_policies).
+* DeepMind Control Suite: coming soon.
+* Hand Manipulation Suite: coming soon.
 
 More data will be added in the future.
 
@@ -116,6 +117,8 @@ More data will be added in the future.
   * `action.shape = (n,)` for discrete actions, `action.shape = (n, a)` for continuous actions,
   * `done.shape = (n,)`,
   * `true_state.shape = (n, s)`.
+
+The script `data_generator/convert_data.py` shows how to convert data for DMC and HMS.
 
 Finally, place the `.pickle` file in `data_path`. This can be anywhere, just be
 sure to set it in `src/arguments.py`, or to pass it as argument when you run the code.
