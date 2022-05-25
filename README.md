@@ -5,6 +5,12 @@
 Implementation of **PVR for Control**, as presented
 in [The (Un)Surprising Effectiveness of Pre-Trained Vision Models for Control](https://arxiv.org/abs/2203.03580).
 
+<ins>The `main` branch reproduces the results presented in the paper.  
+The `distributed` branch uses multiprocessing and distributed training for much
+faster learning. It also has wrappers for other environments, including Adroit and DMC.
+Results are slightly different, but we encourage to use it if you would like to
+build upon our paper.</ins>
+
 ## Codebase Installation
 ```
 conda create -n pvr_habitat python=3.8
