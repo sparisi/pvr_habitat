@@ -164,7 +164,7 @@ def run(flags):
         obs_shape,
         act_space,
         flags.embedding_name if flags.train_embedding else None,
-        use_lstm=flags.num_input_frames == 1,
+        use_lstm=not flags.disable_lstm,
         batch_norm=flags.batch_norm,
         embedding_pretrained=flags.pretrained_embedding,
         embedding_train=flags.train_embedding,
