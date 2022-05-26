@@ -38,10 +38,10 @@ from src.embeddings import EmbeddingWrapper
 
 
 def make_gym_env(env_name, flags, embedding_model=None):
-    # In some envs, pixels obs are optional and make steps slower, so use them only if needed
+    # In some envs (Gym, HMS, DMC), pixels obs are optional and make steps slower,
+    # so use them only if needed. Other envs (Habitat) are always rendered
+    use_pixels = flags.embedding_name != 'true_state'
     use_env_embedding = embedding_model is not None
-    use_pixels = flags.train_embedding or \
-        use_env_embedding and embedding_model.embedding_name != 'true_state'
 
     if 'Habitat' in env_name:
         from habitat_baselines.config.default import get_config

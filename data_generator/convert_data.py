@@ -22,7 +22,7 @@ for f in file_load:
         [np.concatenate((np.full((t['actions'].shape[0]-1,), False), np.array([True]))) for t in data]
     }) # these are infinite-horizon tasks, so all but last step must have done=False
     data = pickle.load(open('dmc_states/' + f, 'rb'))
-    new_data.update({'true_state': [t['observations'] for t in data]})
+    new_data.update({'true_state': [t['observations'] for t in data[:100]]}) # only first 100 traj are used in the other pickles
     file_save = f.replace('dmc', 'DMC').replace('-v1', '').replace('_', '-')
     pickle.dump(new_data, open(file_save, 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
 
