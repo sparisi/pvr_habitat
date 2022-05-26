@@ -123,6 +123,9 @@ def make_gym_env(env_name, flags, embedding_model=None):
     if flags.num_input_frames > 1:
         env = FrameStack(env, flags.num_input_frames, flags.frame_stack_mode)
 
+    if flags.frame_skips > 1:
+        env = FrameSkip(env, flags.frame_skips, flags.frame_skip_mode)
+
     return env
 
 
@@ -376,7 +379,43 @@ class AtariWrapper(gym.Wrapper):
 
 
 # ------------------------------------------------------------------------------
+# Wrappers to skip frames (ie, action repeats)
+# 'last' mode returns only the last obs
+# 'avg' mode returns the avg of all obs during the skips
+# 'max' mode returns their max
+# ------------------------------------------------------------------------------
+class FrameSkip(gym.Wrapper):
+    def __init__(self, env, skips=1, mode='last'):
+        assert skips > 0
+        assert mode in ['last', 'avg', 'max']
+        gym.Wrapper.__init__(self, env)
+        self.skips = skips
+        self.mode = mode
+
+    def step(self, action):
+        total_reward = 0
+        obs_buffer = []
+        for _ in range(self.skips):
+            obs, reward, done, info = self.env.step(action)
+            total_reward += reward
+            obs_buffer.append(obs)
+            if done:
+                break
+        if self.mode == 'last':
+            obs = obs_buffer[-1]
+        elif self.mode == 'avg':
+            obs = np.mean(obs_buffer, axis=0)
+        elif self.mode == 'max':
+            obs = np.maximum(*obs_buffer)
+        else:
+            raise NotImplementedError(f"Unknown frame skip mode: {self.mode}.")
+        return obs, total_reward, done, info
+
+
+# ------------------------------------------------------------------------------
 # Wrappers to stack frames
+# 'cat' mode concatenates frames
+# 'diff' mode is from https://arxiv.org/pdf/2101.01857.pdf
 # ------------------------------------------------------------------------------
 # https://github.com/openai/baselines/blob/master/baselines/common/atari_wrappers.py
 class FrameStack(gym.Wrapper):
@@ -410,7 +449,6 @@ class FrameStack(gym.Wrapper):
         return np.asarray(LazyFrames(list(self.frames), self.k, self.mode))
 
 # https://github.com/MushroomRL/mushroom-rl/blob/dev/mushroom_rl/utils/frames.py
-# 'diff' mode is from https://arxiv.org/pdf/2101.01857.pdf
 class LazyFrames(object):
     def __init__(self, frames, history_length, mode):
         self._frames = frames

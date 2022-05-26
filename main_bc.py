@@ -11,6 +11,7 @@ import random
 from collections import deque
 from tqdm import tqdm
 from copy import deepcopy
+import warnings
 
 from torch.utils.data.distributed import DistributedSampler
 from torch.utils.data import DataLoader, Dataset
@@ -72,6 +73,18 @@ def run(flags):
     ### true_state is special case: it is not an embedding but it is passed with flags.embedding_name
     assert not (flags.train_embedding and flags.embedding_name == 'true_state'), \
         'Cannot train true_state embedding.'
+
+    if flags.embedding_name != 'true_state' and not flags.batch_norm:
+        warn = f'WARN: You are using a perception module without batch normalization.'
+        yellow_warn = f"\033[33m{warn}\033[m"
+        warnings.warn(
+            yellow_warn)
+
+    if flags.num_input_frames > 1 and not flags.disable_lstm:
+        warn = f'WARN: You are stacking frames but still using a LSTM.'
+        yellow_warn = f"\033[33m{warn}\033[m"
+        warnings.warn(
+            yellow_warn)
 
     ### Distributed settings
     if "WORLD_SIZE" in os.environ:

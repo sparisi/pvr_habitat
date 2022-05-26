@@ -49,13 +49,21 @@ parser.add_argument('--env', type=str, default='HabitatImageNav-apartment_0',
                     and action spaces.')
 parser.add_argument('--num_input_frames', type=int, default=1,
                     help='Number of input frames per observation. \
-                    When > 1, the environment will stack the previous \
-                    num_input_frames - 1 frames to the current \
-                    frame according to argument `frame_stack_mode`. \
-                    Also, if > 1 the policy will not use the LSTM layer.')
+                    When > 1, the environment will stack the previous N - 1 frames \
+                    to the current frame according to argument `frame_stack_mode`.')
 parser.add_argument('--frame_stack_mode', type=str, default='cat', choices=['cat', 'diff'],
                     help='How frames are stacked. If `cat`, frames are concatenated. \
                     If `diff` the differences between consecutive frames are concatenated.')
+parser.add_argument('--frame_skips', type=int, default=1,
+                    help='Number of frames skipped per step. \
+                    When > 1, the environment will repeat the same action N times. \
+                    The reward will be the sum of the rewards received during the \
+                    N steps. The observation is determined by `frame_skip_mode`.')
+parser.add_argument('--frame_skip_mode', type=str, default='last', choices=['last', 'avg', 'max'],
+                    help='Determines the observation seen by the agent when frame_skip \
+                    is enabled. If `last` only the observation of the last step \
+                    is returned. If `avg` the observations are averaged. \
+                    If `max` their max is returned.')
 
 # General
 parser.add_argument('--xpid', default=None,
@@ -73,6 +81,9 @@ parser.add_argument('--batch_norm', action='store_true',
                     control layers of the policy (after the perception module). \
                     Should always be used unless there is no perception (i.e., \
                     if we use true state vector observations).')
+parser.add_argument('--disable_lstm', action='store_true',
+                    help='If True, the policy will not have a LSTM core. \
+                    Should always be used when num_input_frames > 1.')
 
 # Optimizer
 parser.add_argument('--learning_rate', default=0.0001, type=float,
